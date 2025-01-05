@@ -6,7 +6,7 @@ green="\033[0;32m"
 plain="\033[0m"
 
 # 脚本版本
-sh_ver="2.0"
+sh_ver="2.1"
 
 # 初始化环境目录
 init_env() {
@@ -126,7 +126,7 @@ Update_Shell() {
 # 检查依赖
 check_dependencies() {
     echo "正在检查当前环境依赖"
-    local dependencies=("wget" "tar" "systemctl" "sed" "grep" "curl")
+    local dependencies=("wget" "tar" "systemctl" "sed" "grep" "curl" "unzip")
 
     for dep in "${dependencies[@]}"; do
         if ! command -v "$dep" &> /dev/null; then
@@ -463,10 +463,10 @@ install_panel() {
     arch=$(uname -m)
     case "$arch" in
         x86_64)
-            panel_file="realm-panel-linux-amd64.tar.gz"
+            panel_file="realm-panel-linux-amd64.zip"
             ;;
         aarch64|arm64)
-            panel_file="realm-panel-linux-arm64.tar.gz"
+            panel_file="realm-panel-linux-arm64.zip"
             ;;
         *)
             echo "不支持的系统架构: $arch"
@@ -481,38 +481,20 @@ install_panel() {
     echo "检测到系统架构: $arch，将下载: $panel_file"
     
     # 下载面板文件
-    download_url="https://github.com/wcwq98/realm/releases/download/v2.0/${panel_file}"
+    download_url="https://github.com/wcwq98/realm/releases/download/v2.1/${panel_file}"
     if ! wget -O "${panel_file}" "$download_url"; then
     echo "下载失败，请检查网络连接或稍后再试。"
     return 1
     fi
-
+    
+	mkdir web
     # 解压并设置权限
-    tar -xvf "${panel_file}" -C /root/realm/
+    unzip "${panel_file}" -d /root/realm/web
 
-	# 重命名文件夹
-	if [ -d "realm-panel-linux-amd64" ]; then
-	    mv realm-panel-linux-amd64 web
-	elif [ -d "realm-panel-linux-arm64" ]; then
-	    mv realm-panel-linux-arm64 web
-	else
-	    echo "未找到解压后的文件夹。"
-	    return 1
-	fi
-	
-	cd web
-	# 设置权限
-	chmod +rwx realm-web-amd64
-	
-	# 重命名文件
-	if [ -f "realm-web-amd64" ]; then
-	    mv realm-web-amd64 realm_web
-	elif [ -f "realm-web-arm64" ]; then
-	    mv realm-web-arm64 realm_web
-	else
-	    echo "未找到解压后的文件。"
-	    return 1
-	fi
+    cd web
+    # 设置权限
+    chmod +x realm_web
+    
 
 
     # 创建服务文件
