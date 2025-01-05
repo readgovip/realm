@@ -36,6 +36,12 @@
         button:hover {
             background-color: #218838;
         }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -56,7 +62,7 @@
             display: block;
             margin-bottom: 5px;
         }
-        .form-group input {
+        .form-group input, .form-group textarea {
             width: calc(100% - 22px);
             padding: 10px;
             border: 1px solid #ccc;
@@ -64,12 +70,12 @@
         }
         #output {
             margin-top: 20px;
-            background-color: #fff;
+            background-color: #f8f9fa;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             min-height: 50px;
-            white-space: pre-wrap; /* 保持空格和换行 */
+            white-space: pre-wrap;
         }
         .status-tag {
             display: inline-flex;
@@ -81,292 +87,94 @@
             margin-left: 10px;
             font-weight: 500;
         }
-
         .status-tag.running {
             background-color: #52c41a;
             color: white;
         }
-
         .status-tag.stopped {
             background-color: #ff4d4f;
             color: white;
         }
-
         .status-wrapper {
             display: inline-flex;
             align-items: center;
             margin-left: 15px;
         }
-
         .status-label {
             color: #666;
             margin-right: 8px;
         }
-
         .button-group {
             display: flex;
             align-items: center;
             margin-bottom: 20px;
         }
+        #logoutButton {
+            background-color: #6c757d;
+        }
+        #logoutButton:hover {
+            background-color: #5a6268;
+        }
     </style>
 </head>
 <body>
+    <div class="container">
+        <h1>Realm 转发管理面板</h1>
 
-<div class="container">
-    <h1>Realm 转发管理面板</h1>
-
-    <div class="button-group">
-        <button id="startButton">启动服务</button>
-        <button id="stopButton">停止服务</button>
-        <button id="logoutButton">登出</button>
-        <div class="status-wrapper">
-            <span class="status-label">状态:</span>
-            <span id="serviceStatus" class="status-tag">检查中...</span>
+        <div class="button-group">
+            <button id="startButton">启动服务</button>
+            <button id="stopButton">停止服务</button>
+            <button id="restartButton">重启服务</button>
+            <button id="logoutButton">登出</button>
+            <div class="status-wrapper">
+                <span class="status-label">状态:</span>
+                <span id="serviceStatus" class="status-tag">检查中...</span>
+            </div>
         </div>
+
+        <div id="output"></div>
+
+        <h2>当前转发规则</h2>
+        <table id="forwardingTable">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>中转端口</th>
+                    <th>落地机 IP</th>
+                    <th>目标端口</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 动态填充转发规则 -->
+            </tbody>
+        </table>
+
+        <h2>添加转发规则</h2>
+        <div class="form-group">
+            <label for="localPort">中转端口:</label>
+            <input type="number" id="localPort" required>
+        </div>
+        <div class="form-group">
+            <label for="remoteIP">落地机 IP:</label>
+            <input type="text" id="remoteIP" required>
+        </div>
+        <div class="form-group">
+            <label for="remotePort">目标端口:</label>
+            <input type="number" id="remotePort" required>
+        </div>
+        <button id="addRuleButton">添加规则</button>
+
+        <h2>批量添加转发规则</h2>
+        <div class="form-group">
+            <label for="rulesInput">请输入转发规则（每行一个规则）：</label>
+            <p>IPv4 格式：中转端口:落地机IP:目标端口</p>
+            <p>IPv6 格式：中转端口:[落地机IPv6]:目标端口</p>
+            <textarea id="rulesInput" rows="5"></textarea>
+        </div>
+        <button id="addBatchRulesButton">批量添加规则</button>
     </div>
 
-    <div id="output"></div>
-
-    <h2>当前转发规则</h2>
-    <table id="forwardingTable">
-        <thead>
-            <tr>
-                <th>序号</th>
-                <th>中转端口</th>
-                <th>落地鸡 IP</th>
-                <th>目标端口</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- 动态填充转发规则 -->
-        </tbody>
-    </table>
-
-    <h2>添加转发规则</h2>
-    <div class="form-group">
-        <label for="localPort">中转端口:</label>
-        <input type="number" id="localPort" required>
-    </div>
-    <div class="form-group">
-        <label for="remoteIP">落地鸡 IP:</label>
-        <input type="text" id="remoteIP" required>
-    </div>
-    <div class="form-group">
-        <label for="remotePort">目标端口:</label>
-        <input type="number" id="remotePort" required>
-    </div>
-    <button id="addRuleButton">添加规则</button>
-
-</div>
-
-<script>
-    async function updateServiceStatus() {
-        try {
-            const response = await fetch(`/check_status`, {
-                method: 'GET'
-            });
-            
-            if (!response.ok) {
-                throw new Error('检查状态失败：' + response.statusText);
-            }
-
-            const data = await response.json();
-            const statusElement = document.getElementById('serviceStatus');
-            
-            if (data.status === "启用") {
-                statusElement.textContent = "运行中";
-                statusElement.className = 'status-tag running';
-            } else {
-                statusElement.textContent = "已停止";
-                statusElement.className = 'status-tag stopped';
-            }
-        } catch (error) {
-            console.error('更新状态失败:', error);
-            document.getElementById('serviceStatus').textContent = '未知';
-            document.getElementById('serviceStatus').className = 'status-tag stopped';
-        }
-    }
-
-    // 启动服务
-    document.getElementById('startButton').onclick = async function() {
-        try {
-            const response = await fetch(`/start_service`, {
-                method: 'POST'
-            });
-            
-            if (!response.ok) {
-                throw new Error('启动服务失败：' + response.statusText);
-            }
-
-            const data = await response.json();
-            document.getElementById('output').innerText = data.message || '服务启动成功';
-            await updateServiceStatus();
-        } catch (error) {
-            console.error('启动服务失败:', error);
-            document.getElementById('output').innerText = error.message;
-        }
-    };
-
-    // 停止服务
-    document.getElementById('stopButton').onclick = async function() {
-        try {
-            const response = await fetch(`/stop_service`, {
-                method: 'POST'
-            });
-            
-            if (!response.ok) {
-                throw new Error('停止服务失败：' + response.statusText);
-            }
-
-            const data = await response.json();
-            document.getElementById('output').innerText = data.message || '服务停止成功';
-            await updateServiceStatus();
-        } catch (error) {
-            console.error('停止服务失败:', error);
-            document.getElementById('output').innerText = error.message;
-        }
-    };
-
-
-    // 添加转发规则
-    document.getElementById('addRuleButton').onclick = async function() {
-        const localPort = document.getElementById('localPort').value;
-        const remoteIP = document.getElementById('remoteIP').value;
-        const remotePort = document.getElementById('remotePort').value;
-
-        try {
-            const response = await fetch(`/add_rule`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    listen: `0.0.0.0:${localPort}`,
-                    remote: `${remoteIP}:${remotePort}`
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error('添加规则失败：' + response.statusText);
-            }
-
-            alert('转发规则添加成功！');
-            await fetchForwardingRules(); // 刷新规则列表
-        } catch (error) {
-            console.error('添加规则失败:', error);
-            alert('添加规则失败：' + error.message);
-        }
-    };
-
-    // 删除转发规则
-    async function deleteRule(listenAddress) {
-        try {
-            const response = await fetch(`/delete_rule?listen=${encodeURIComponent(listenAddress)}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) {
-                throw new Error('删除规则失败：' + response.statusText);
-            }
-
-            alert('转发规则删除成功！');
-            await fetchForwardingRules(); // 刷新规则列表
-        } catch (error) {
-            console.error('删除规则失败:', error);
-            alert('删除规则失败：' + error.message);
-        }
-    }
-
-    // 获取当前转发规则
-    async function fetchForwardingRules() {
-        try {
-            const response = await fetch(`/get_rules`);
-            if (!response.ok) {
-                throw new Error('获取规则失败：' + response.statusText);
-            }
-            const rules = await response.json();
-            const tbody = document.querySelector('#forwardingTable tbody');
-            tbody.innerHTML = ''; // 清空现有规则
-
-            rules.forEach((rule, index) => {
-                const row = document.createElement('tr');
-                let localPort = '', remoteIP = '', remotePort = '';
-
-                // 处理本地端口
-                if (rule.listen) {  // 改为小写 listen
-                    [, localPort] = rule.listen.split(':');
-                }
-
-                // 处理远程地址和端口
-                if (rule.remote) {  // 改为小写 remote
-                    // 检查是否是IPv6地址
-                    if (rule.remote.includes('[')) {
-                        // IPv6格式: [2001:db8::1]:80
-                        const matches = rule.remote.match(/\[(.*)\]:(.*)$/);
-                        if (matches) {
-                            remoteIP = matches[1];
-                            remotePort = matches[2];
-                        }
-                    } else if (rule.remote.includes(':')) {
-                        // 检查冒号的数量来判断是IPv6还是IPv4
-                        const colonCount = (rule.remote.match(/:/g) || []).length;
-                        if (colonCount > 1) {
-                            // IPv6地址没有方括号的情况
-                            const lastColon = rule.remote.lastIndexOf(':');
-                            remoteIP = rule.remote.substring(0, lastColon);
-                            remotePort = rule.remote.substring(lastColon + 1);
-                        } else {
-                            // IPv4地址
-                            [remoteIP, remotePort] = rule.remote.split(':');
-                        }
-                    }
-                }
-
-                row.innerHTML = `
-                    <td>${index + 1}</td>
-                    <td>${localPort || 'N/A'}</td>
-                    <td>${remoteIP || 'N/A'}</td>
-                    <td>${remotePort || 'N/A'}</td>
-                    <td><button onclick="deleteRule('${rule.listen || ''}')">删除</button></td>
-                `;
-                tbody.appendChild(row);
-            });
-        } catch (error) {
-            console.error('获取转发规则失败:', error);
-            alert('获取转发规则失败：' + error.message);
-        }
-    }
-
-    // 页面加载时获取转发规则和服务状态
-    window.onload = async function() {
-        await fetchForwardingRules();
-        await updateServiceStatus();
-        
-        // 每10秒更新一次状态
-        setInterval(updateServiceStatus, 10000);
-    };
-
-    // 登出功能
-    document.getElementById('logoutButton').onclick = async function() {
-        try {
-            const response = await fetch('/logout', {
-                method: 'POST'
-            });
-            
-            if (!response.ok) {
-                throw new Error('登出失败：' + response.statusText);
-            }
-
-            // 登出成功，重定向到登录页面
-            window.location.href = '/login';
-        } catch (error) {
-            console.error('登出失败:', error);
-            alert('登出失败：' + error.message);
-        }
-    };
-</script>
-
+    <script src="/static/app.js"></script>
 </body>
 </html>
-

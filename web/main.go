@@ -171,7 +171,7 @@ func main() {
 			session := sessions.Default(c)
 			session.Set("user", true)
 			session.Options(sessions.Options{
-				MaxAge: 3600 * 24, // 24小时
+				MaxAge: 3600 * 2, // 2小时
 			})
 			if err := session.Save(); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Session保存失败"})
@@ -266,7 +266,15 @@ func main() {
 
 			c.JSON(200, gin.H{"message": "服务停止成功"})
 		})
-
+		authorized.POST("/restart_service", func(c *gin.Context) {
+			cmd := exec.Command("systemctl", "restart", "realm")
+			if err := cmd.Run(); err != nil {
+				c.JSON(500, gin.H{"error": "服务重启失败"})
+				return
+			}
+		
+			c.JSON(200, gin.H{"message": "服务重启成功"})
+		})
 		authorized.GET("/check_status", func(c *gin.Context) {
 			cmd := exec.Command("systemctl", "is-active", "--quiet", "realm")
 			err := cmd.Run()
