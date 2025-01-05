@@ -28,11 +28,11 @@ realm 转发状态：启用
 ## 一键脚本：
 国内或v6 only可用（推荐）
 ```
-curl -L https://host.wxgwxha.eu.org/https://github.com/wcwq98/realm/releases/download/v2.0/realm.sh -o realm.sh && chmod +x realm.sh &&  ./realm.sh
+curl -L https://host.wxgwxha.eu.org/https://github.com/wcwq98/realm/releases/download/v2.1/realm.sh -o realm.sh && chmod +x realm.sh &&  ./realm.sh
 ```
 或
 ```
-curl -L https://github.com/wcwq98/realm/releases/download/v2.0/realm.sh -o realm.sh && chmod +x realm.sh &&  ./realm.sh
+curl -L https://github.com/wcwq98/realm/releases/download/v2.1/realm.sh -o realm.sh && chmod +x realm.sh &&  ./realm.sh
 ```
 或
 ```
@@ -53,7 +53,7 @@ use_udp = true #是否开启udp转发
 listen = "0.0.0.0:1234"
 remote = "0.0.0.0:5678"
 ```
-## 可视化面板配置文件
+## 可视化面板配置文件路径：/root/realm/web/config.toml
 ```
 [auth]
 password = "123456" # 面板密码
@@ -62,7 +62,7 @@ password = "123456" # 面板密码
 port = 8081 # 面板端口
 
 [https]
-enabled = false #是否开启HTTPS(强烈建议开启HTTPS)
+enabled = false #是否开启HTTPS(强烈建议开启HTTPS)若certificate下没有证书不要开启此功能
 cert_file = "./certificate/cert.pem"
 key_file = "./certificate/private.key"
 
