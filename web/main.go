@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -195,10 +196,35 @@ func main() {
 		})
 
 		authorized.GET("/get_rules", func(c *gin.Context) {
+			pageStr := c.Query("page")
+			sizeStr := c.Query("size")
+			page, err := strconv.Atoi(pageStr)
+			if err != nil || page < 1 {
+				page = 1
+			}
+			size, err := strconv.Atoi(sizeStr)
+			if err != nil || size < 1 {
+				size = 10
+			}
+
 			mu.Lock()
-			rules := config.Endpoints
-			mu.Unlock()
-			c.JSON(200, rules)
+			defer mu.Unlock()
+
+			totalCount := len(config.Endpoints)
+			start := (page - 1) * size
+			end := start + size
+			if start >= totalCount {
+				start = totalCount
+			}
+			if end > totalCount {
+				end = totalCount
+			}
+			paginatedRules := config.Endpoints[start:end]
+
+			c.JSON(200, gin.H{
+				"rules": paginatedRules,
+				"total": totalCount,
+			})
 		})
 
 		authorized.POST("/add_rule", func(c *gin.Context) {
@@ -266,15 +292,17 @@ func main() {
 
 			c.JSON(200, gin.H{"message": "服务停止成功"})
 		})
+
 		authorized.POST("/restart_service", func(c *gin.Context) {
 			cmd := exec.Command("systemctl", "restart", "realm")
 			if err := cmd.Run(); err != nil {
 				c.JSON(500, gin.H{"error": "服务重启失败"})
 				return
 			}
-		
+
 			c.JSON(200, gin.H{"message": "服务重启成功"})
 		})
+
 		authorized.GET("/check_status", func(c *gin.Context) {
 			cmd := exec.Command("systemctl", "is-active", "--quiet", "realm")
 			err := cmd.Run()

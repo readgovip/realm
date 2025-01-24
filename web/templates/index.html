@@ -108,12 +108,37 @@
             display: flex;
             align-items: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         #logoutButton {
             background-color: #6c757d;
         }
         #logoutButton:hover {
             background-color: #5a6268;
+        }
+        /* 分页区域 */
+        .pagination {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .pagination button {
+            margin: 0 5px;
+            padding: 8px 12px;
+        }
+        .page-info {
+            margin: 0 10px;
+            color: #555;
+        }
+        /* 每页条数下拉框样式 */
+        .page-size-select {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+        }
+        .page-size-select label {
+            margin-right: 5px;
         }
     </style>
 </head>
@@ -135,6 +160,22 @@
         <div id="output"></div>
 
         <h2>当前转发规则</h2>
+        <!-- 分页控制区 -->
+        <div class="pagination">
+            <div class="page-size-select">
+                <label for="pageSizeSelect">每页显示:</label>
+                <select id="pageSizeSelect">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+            </div>
+            <button id="prevPage">上一页</button>
+            <span id="pageInfo" class="page-info"></span>
+            <button id="nextPage">下一页</button>
+        </div>
+
         <table id="forwardingTable">
             <thead>
                 <tr>
