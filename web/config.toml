@@ -1,8 +1,8 @@
 [auth]
-password = "123456" # 面板密码
+password = "A88033054a" # 面板密码
 
 [server]
-port = 8081 # 面板端口
+port = 65506 # 面板端口
 
 [https]
 enabled = false #是否开启HTTPS
