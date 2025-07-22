@@ -95,7 +95,7 @@ check_panel_service_status() {
 # 更新脚本
 Update_Shell() {
     echo -e "当前脚本版本为 [ ${sh_ver} ]，开始检测最新版本..."
-    sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/wcwq98/realm/main/realm.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
+    sh_new_ver=$(wget --no-check-certificate -qO- "https://raw.githubusercontent.com/readgovip/realm/main/realm.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1)
     if [[ -z ${sh_new_ver} ]]; then
         echo -e "${red}检测最新版本失败！请检查网络或稍后再试。${plain}"
         return 1
@@ -110,7 +110,7 @@ Update_Shell() {
     read -p "(默认: y): " yn
     yn=${yn:-y}
     if [[ ${yn} =~ ^[Yy]$ ]]; then
-        wget -N --no-check-certificate https://raw.githubusercontent.com/wcwq98/realm/main/realm.sh -O realm.sh
+        wget -N --no-check-certificate https://raw.githubusercontent.com/readgovip/realm/main/realm.sh -O realm.sh
         if [[ $? -ne 0 ]]; then
             echo -e "${red}下载脚本失败，请检查网络连接！${plain}"
             return 1
